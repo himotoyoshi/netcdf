@@ -5,7 +5,7 @@
 #   $ ncdump simple.nc
 
 require "netcdf"
-require "carray"
+require "carray"   # a MemoryView producer/consumer
 
 path = "simple.nc"
 

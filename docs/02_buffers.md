@@ -62,11 +62,11 @@ A buffer with no format at all is passed through as raw bytes of the variable's 
 
 ## Array libraries
 
-An array class that exposes MemoryView natively is a buffer here with no adapter written for it and nothing copied on the way through — **CArray** and **Apache Arrow** (red-arrow) are two that do.  Pass the array where a buffer goes:
+An array class that exposes MemoryView natively is a buffer here with no adapter written for it and nothing copied on the way through.  Pass the array where a buffer goes; the example takes CArray as one such class:
 
 ```ruby
 require "netcdf"
-require "carray"
+require "carray"   # a MemoryView producer/consumer
 
 src = CArray.double(3, 4).seq(1.0)
 NetCDF.nc_put_vara(ncid, varid, [0, 0], [3, 4], src)

@@ -48,7 +48,7 @@ Opening an existing file skips all of this — the file is already in data mode.
 
 ```ruby
 require "netcdf"
-require "carray"
+require "carray"   # a MemoryView producer/consumer
 
 ncid = NetCDF.nc_create("temp.nc", NetCDF::NC_CLOBBER | NetCDF::NC_NETCDF4)
 
@@ -82,7 +82,7 @@ Four things in there are worth naming:
 
 ```ruby
 require "netcdf"
-require "carray"
+require "carray"   # a MemoryView producer/consumer
 
 ncid = NetCDF.nc_open("temp.nc", NetCDF::NC_NOWRITE)
 

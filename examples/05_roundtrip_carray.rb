@@ -7,7 +7,7 @@
 # netcdf gem can read from / write to a CArray's storage directly.
 
 require "netcdf"
-require "carray"
+require "carray"   # a MemoryView producer/consumer
 
 require "tmpdir"
 Dir.mktmpdir do |tmp|

@@ -7,7 +7,7 @@ The binding is nearly one to one, for code that wants to be written the way NetC
 ## Features
 
 * Programs are written the way NetCDF's own are: every `nc_*` function under its own name, taking its arguments in its own order, so a call in a C example is written here as it stands
-* Any MemoryView producer is a buffer — CArray, an Arrow array, `Fiddle::Pointer` — with no adapter written for it, and libnetcdf reads or writes its memory where it lies
+* Any MemoryView producer is a buffer, with no adapter written for it, and libnetcdf reads or writes its memory where it lies
 * Array I/O releases the GVL, so other threads keep running through a long read or write; netCDF calls themselves are serialized, since libnetcdf is not thread-safe
 
 What libnetcdf offers is bound and covered by the test suite, apart from a handful of features listed at the end of the [reference](docs/03_reference.md#not-yet-implemented).
@@ -38,7 +38,7 @@ Arrays are passed to and from this gem through [MemoryView](https://github.com/r
 
 ```ruby
 require "netcdf"
-require "carray"
+require "carray"   # a MemoryView producer/consumer
 
 ncid = NetCDF.nc_create("out.nc", NetCDF::NC_CLOBBER | NetCDF::NC_NETCDF4)
 

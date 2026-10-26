@@ -4,7 +4,7 @@
 #   $ ruby -Ilib examples/02_read_inspect.rb simple.nc
 
 require "netcdf"
-require "carray"
+require "carray"   # a MemoryView producer/consumer
 
 path = ARGV[0] or abort "usage: 02_read_inspect.rb FILE.nc"
 
