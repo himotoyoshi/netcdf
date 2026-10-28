@@ -24,9 +24,9 @@ Every function this gem defines, grouped by subsystem.  [Getting started](01_get
 - `ncid`, `dimid`, `varid`, `attnum`, `grpid` are the integers libnetcdf uses, passed to and from these calls unchanged.
 - Functions that take an `Array` of indices (`start`, `count`, `stride`, etc.) expect a Ruby `Array` of `Integer` whose length equals the variable's rank.
 - Smart-typing generics (`nc_put_att`, `nc_get_att`, `nc_put_var1`, `nc_get_var1`, `nc_put_var{,a,s,m}`, `nc_get_var{,a,s,m}`) dispatch on the Ruby value type or the variable's `nc_type`. There are no typed Ruby variants for variables — Ruby's type system already covers the relevant cases. Attributes do expose typed variants because the put-call itself determines the on-disk attribute type.
-- Buffer arguments for array I/O are MemoryView producers. A raw Ruby `String` is *not* accepted there; see [Buffers and MemoryView](02_buffers.md).
+- Buffer arguments for array I/O are objects that support MemoryView. A raw Ruby `String` is *not* accepted there; see [Buffers and MemoryView](02_buffers.md).
 - `get` calls read into the buffer passed and return it; the gem allocates none of its own, and omitting the buffer raises `ArgumentError`.  `NC_STRING` variables are the exception: they take no buffer and return a nested Ruby `Array<String>` (`char**` does not map to MemoryView).
-- Array I/O releases the GVL around the underlying libnetcdf call.  Every call is serialized on one process-wide lock, because libnetcdf is not thread-safe; see [the GVL](02_buffers.md#the-gvl).
+- Array I/O releases the GVL around the underlying libnetcdf call.  Every call is serialized on one process-wide lock, because libnetcdf is not thread-safe; see [Threads and the GVL](02_buffers.md#threads-and-the-gvl).
 
 ## File
 
@@ -153,7 +153,7 @@ NetCDF.nc_get_vars(ncid, varid, start, count, stride[, buffer])
 NetCDF.nc_get_varm(ncid, varid, start, count, stride, imap[, buffer])
 ```
 
-`buffer` is any object that implements the Ruby MemoryView protocol.  It must be sized to hold the requested elements, must be writable on `get` calls, and must be row-major C-contiguous; [Buffers and MemoryView](02_buffers.md) has the rules and the errors they raise.
+`buffer` is any object that supports MemoryView.  It must be sized to hold the requested elements, must be writable on `get` calls, and must be row-major C-contiguous; [Buffers and MemoryView](02_buffers.md) has the rules and the errors they raise.
 
 On `get`, the read fills `buffer` and returns it.  The argument is written as optional only because `NC_STRING` variables take none and return a nested `Array<String>` instead (see below); for any other type, omitting it raises `ArgumentError: buffer is required`.
 
@@ -314,7 +314,7 @@ NetCDF.nc_get_vara(ncid, v, [0], [3], out)
 out.to_s                                              # => "ABCDEFGHIJKL"
 ```
 
-Raw Ruby Strings are not accepted on the array I/O surface, the same as for any other type.
+Raw Ruby Strings are not accepted by array I/O, the same as for any other type.
 
 ### Vlen (variable-length sequence)
 

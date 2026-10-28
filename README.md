@@ -1,20 +1,25 @@
 # netcdf
 
-A Ruby binding to the [NetCDF](https://www.unidata.ucar.edu/software/netcdf/) C library that passes data through Ruby's MemoryView protocol.  An array library's own memory is handed to libnetcdf, which reads or writes it where it lies: nothing is copied, and no Ruby Array stands in between.
+A Ruby binding to the [NetCDF](https://www.unidata.ucar.edu/software/netcdf/) C library that passes data through Ruby's MemoryView protocol.
 
-The binding is nearly one to one, for code that wants to be written the way NetCDF itself is written; [Unidata's C documentation](https://docs.unidata.ucar.edu/netcdf-c/current/) reads as documentation for it.
+The binding is nearly one to one, each C function corresponding to a Ruby method of the same name, so [Unidata's C documentation](https://docs.unidata.ucar.edu/netcdf-c/current/) reads as documentation for it.
 
 ## Features
 
-* Programs are written the way NetCDF's own are: every `nc_*` function under its own name, taking its arguments in its own order, so a call in a C example is written here as it stands
-* Any MemoryView producer is a buffer, with no adapter written for it, and libnetcdf reads or writes its memory where it lies
-* Array I/O releases the GVL, so other threads keep running through a long read or write; netCDF calls themselves are serialized, since libnetcdf is not thread-safe
-
-What libnetcdf offers is bound and covered by the test suite, apart from a handful of features listed at the end of the [reference](docs/03_reference.md#not-yet-implemented).
+* Provides the same `nc_*` functions as the NetCDF C library, with their arguments in the same order as the originals
+* Variable data is read and written with any buffer object that supports MemoryView
+* Ruby's GVL (Global VM Lock) is released while variable data is read or written
+* NetCDF calls from different threads run one at a time (libnetcdf is not thread-safe)
 
 ## Install
 
-Install libnetcdf and its headers first, then the gem:
+Requires:
+
+- Ruby >= 3.1
+- libnetcdf >= 4.1, with its headers (`nc-config` or `pkg-config` on PATH)
+- A C compiler
+
+With those in place, install the gem:
 
 ```
 gem install netcdf
@@ -26,19 +31,13 @@ Or add it to your `Gemfile`:
 gem "netcdf"
 ```
 
-Requires:
-
-- Ruby >= 3.1
-- libnetcdf >= 4.1, with its headers (`nc-config` or `pkg-config` on PATH)
-- A C compiler
-
 ## Example
 
-Arrays are passed to and from this gem through [MemoryView](https://github.com/ruby/ruby/blob/master/include/ruby/memory_view.h), the protocol Ruby 3.0 added for sharing an array's memory between libraries.  An array library that implements it works here as it is, with no adapter written on either side; the gem itself depends on no array library.  The example below takes [CArray](https://github.com/himotoyoshi/carray) as one such library: it writes a 3 × 4 variable with two attributes, and reads it back.
+Variable data is read and written through the [MemoryView](https://github.com/ruby/ruby/blob/master/include/ruby/memory_view.h) protocol, so any buffer object that supports MemoryView can be the other end of the binary I/O.  The example below uses [CArray](https://github.com/himotoyoshi/carray) to show a NetCDF variable being written and read back.
 
 ```ruby
 require "netcdf"
-require "carray"   # a MemoryView producer/consumer
+require "carray"                                    # an array library that supports MemoryView
 
 ncid = NetCDF.nc_create("out.nc", NetCDF::NC_CLOBBER | NetCDF::NC_NETCDF4)
 
@@ -60,18 +59,16 @@ NetCDF.nc_get_vara(ncid, v, [0, 0], [3, 4], dst)
 NetCDF.nc_close(ncid)
 ```
 
-libnetcdf reads and writes the array's own memory, with nothing copied in between.
-
 ## Documentation
 
-* [Introduction](docs/00_introduction.md) — what this gem is, what it leaves to a layer above, and what is not implemented
+* [Introduction](docs/00_introduction.md) — what the netcdf gem is, what it leaves to libraries built on it, and what is not implemented
 * [Getting started](docs/01_getting_started.md) — install, the shape of the API, writing and reading your first file
 * [Buffers and MemoryView](docs/02_buffers.md) — how data actually moves: what a buffer must satisfy, format strings, and handing an array library's memory straight over
-* [Reference](docs/03_reference.md) — every function, grouped by subsystem, plus every constant
+* [Reference](docs/03_reference.md) — every function, grouped by subsystem, and every constant
 
 ## Contributing
 
-Bug reports, feature requests and pull requests are welcome.
+Bug reports, feature requests and pull requests are welcome on [GitHub](https://github.com/himotoyoshi/netcdf/issues).
 
 ## Credits
 
@@ -79,4 +76,4 @@ netcdf was designed and reviewed by a human developer; the implementation was pr
 
 ## License
 
-MIT
+[MIT](LICENSE)
