@@ -1,13 +1,13 @@
 Gem::Specification.new do |spec|
   spec.name        = "netcdf"
   spec.version     = File.read(File.expand_path("lib/netcdf/version.rb", __dir__))[/VERSION\s*=\s*"([^"]+)"/, 1]
-  spec.summary     = "Ruby binding to the NetCDF C library, one Ruby method per C function"
+  spec.summary     = "Ruby binding to the NetCDF C library that passes data through Ruby's MemoryView protocol"
   spec.description = <<~TEXT
-    A literal translation of the NetCDF C library into Ruby: every function
-    under its own name, with libnetcdf's own documentation to read it by.
-    Bulk data is passed through Ruby's MemoryView protocol: an array
-    library's own memory is handed to libnetcdf, which reads or writes it
-    where it lies, and array I/O runs with the GVL released.
+    A Ruby binding to the NetCDF C library. The binding is nearly one to
+    one, each nc_* function corresponding to a Ruby method of the same name
+    with its arguments in the same order, so Unidata's C documentation
+    reads as documentation for it. Variable data is read and written with
+    any buffer object that supports MemoryView.
   TEXT
   spec.authors     = ["himotoyoshi"]
   spec.email       = ["himotoyoshi@users.noreply.github.com"]
