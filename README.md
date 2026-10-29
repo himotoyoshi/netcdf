@@ -9,7 +9,7 @@ The binding is nearly one to one, each C function corresponding to a Ruby method
 * Provides the same functions as the NetCDF C library, under the same names and with their arguments in the same order
 * Variable data is read and written with any buffer object that supports MemoryView
 * Ruby's GVL (Global VM Lock) is released while variable data is read or written
-* Access to the libnetcdf API is serialized (libnetcdf itself is not thread-safe)
+* Serializes access to the libnetcdf API, which is itself not thread-safe
 
 ## Install
 
