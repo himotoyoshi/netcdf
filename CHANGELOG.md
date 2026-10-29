@@ -29,18 +29,11 @@ version you have and a newer one.
      libnetcdf a release needs is said in extconf.rb, and an entry says
      so only when the answer changes. -->
 
-## 0.2.0 (unreleased)
+## 0.2.0
 
 - New: the `NC_64BIT_DATA` creation flag, and its alias `NC_CDF5`, for
   `nc_create` to write a CDF-5 file. Defined only when libnetcdf has
   them (4.4 or later); `NC_FORMAT_64BIT_DATA` was already there.
-
-- Fix: an attribute of enum type, such as the `_FillValue` netCDF4-python
-  writes for an enum variable, is read as Integers of the enum's base
-  type by `nc_get_att` and by the base type's typed getter, instead of
-  raising `NotImplementedError`. `nc_def_var_fill` and `nc_inq_var_fill`
-  accept an enum variable in the same way. Writing an enum attribute
-  other than `_FillValue` is still not supported.
 
 - New: calls for the compression filters szip, zstandard, bzip2 and
   blosc: `nc_def_var_szip` / `nc_inq_var_szip`, and the same pair for
@@ -67,6 +60,13 @@ version you have and a newer one.
   dimensions as an Array, or `[]` if there are none. A NetCDF-4 file can
   have more than one unlimited dimension; `nc_inq_unlimdim` still returns
   only one of them.
+
+- Fix: an attribute of enum type, such as the `_FillValue` netCDF4-python
+  writes for an enum variable, is read as Integers of the enum's base
+  type by `nc_get_att` and by the base type's typed getter, instead of
+  raising `NotImplementedError`. `nc_def_var_fill` and `nc_inq_var_fill`
+  accept an enum variable in the same way. Writing an enum attribute
+  other than `_FillValue` is still not supported.
 
 ## 0.1.0
 
