@@ -30,6 +30,25 @@ class TestUserTypes < Test::Unit::TestCase
     assert_equal NetCDF::NC_OPAQUE, klass
   end
 
+  def test_inq_type_equal_atomic
+    assert_true  NetCDF.nc_inq_type_equal(@ncid, NetCDF::NC_INT, @ncid, NetCDF::NC_INT)
+    assert_false NetCDF.nc_inq_type_equal(@ncid, NetCDF::NC_INT, @ncid, NetCDF::NC_FLOAT)
+  end
+
+  def test_inq_type_equal_across_files
+    t = NetCDF.nc_def_opaque(@ncid, 16, "uuid_t")
+
+    ncid2 = NetCDF.nc_create(File.join(@tmp, "u.nc"), NetCDF::NC_CLOBBER | NetCDF::NC_NETCDF4)
+    same  = NetCDF.nc_def_opaque(ncid2, 16, "uuid_t")
+    other = NetCDF.nc_def_opaque(ncid2, 8,  "tag_t")
+    # libnetcdf compares user types only after they are written out.
+    NetCDF.nc_enddef(@ncid)
+    NetCDF.nc_enddef(ncid2)
+    assert_true  NetCDF.nc_inq_type_equal(@ncid, t, ncid2, same)
+    assert_false NetCDF.nc_inq_type_equal(@ncid, t, ncid2, other)
+    NetCDF.nc_close(ncid2)
+  end
+
   def test_opaque_var1_round_trip
     t = NetCDF.nc_def_opaque(@ncid, 4, "tag_t")
     d = NetCDF.nc_def_dim(@ncid, "n", 3)

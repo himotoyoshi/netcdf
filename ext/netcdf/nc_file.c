@@ -230,6 +230,28 @@ rb_nc_inq_unlimdim (VALUE self, VALUE rncid)
   return ( d < 0 ) ? Qnil : INT2NUM(d);
 }
 
+static VALUE
+rb_nc_inq_unlimdims (VALUE self, VALUE rncid)
+{
+  VALUE out;
+  int n, st, i;
+  int *ids;
+
+  NC_CHECK(nc_inq_unlimdims(NUM2INT(rncid), &n, NULL));
+  ids = ALLOC_N(int, n > 0 ? n : 1);
+  st = nc_inq_unlimdims(NUM2INT(rncid), NULL, ids);
+  if ( st != NC_NOERR ) {
+    xfree(ids);
+    nc_raise(st);
+  }
+  out = rb_ary_new_capa(n);
+  for (i=0; i<n; i++) {
+    rb_ary_push(out, INT2NUM(ids[i]));
+  }
+  xfree(ids);
+  return out;
+}
+
 #ifdef HAVE_NC_INQ_PATH
 static VALUE
 rb_nc_inq_path (VALUE self, VALUE rncid)
@@ -290,6 +312,16 @@ rb_nc_set_fill (VALUE self, VALUE rncid, VALUE rmode)
   return INT2NUM(old);
 }
 
+/* Process-global format used by nc_create when the mode names none. */
+static VALUE
+rb_nc_set_default_format (VALUE self, VALUE rformat)
+{
+  int old;
+
+  NC_CHECK(nc_set_default_format(NUM2INT(rformat), &old));
+  return INT2NUM(old);
+}
+
 /* Process-global HDF5 chunk cache parameters. */
 static VALUE
 rb_nc_set_chunk_cache (VALUE self, VALUE rsize, VALUE rnelems, VALUE rpreemption)
@@ -334,6 +366,7 @@ init_nc_file (void)
   rb_define_module_function(mNetCDF, "nc_inq_nvars",           rb_nc_inq_nvars,            1);
   rb_define_module_function(mNetCDF, "nc_inq_natts",           rb_nc_inq_natts,            1);
   rb_define_module_function(mNetCDF, "nc_inq_unlimdim",        rb_nc_inq_unlimdim,         1);
+  rb_define_module_function(mNetCDF, "nc_inq_unlimdims",       rb_nc_inq_unlimdims,        1);
 #ifdef HAVE_NC_INQ_PATH
   rb_define_module_function(mNetCDF, "nc_inq_path",            rb_nc_inq_path,             1);
 #endif
@@ -344,6 +377,7 @@ init_nc_file (void)
   rb_define_module_function(mNetCDF, "nc_inq_libvers",         rb_nc_inq_libvers,          0);
   rb_define_module_function(mNetCDF, "nc_inq_type",            rb_nc_inq_type,             2);
   rb_define_module_function(mNetCDF, "nc_set_fill",            rb_nc_set_fill,             2);
+  rb_define_module_function(mNetCDF, "nc_set_default_format",  rb_nc_set_default_format,   1);
   rb_define_module_function(mNetCDF, "nc_set_chunk_cache",     rb_nc_set_chunk_cache,      3);
   rb_define_module_function(mNetCDF, "nc_get_chunk_cache",     rb_nc_get_chunk_cache,      0);
 }

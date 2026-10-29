@@ -37,6 +37,19 @@ class TestInqMisc < Test::Unit::TestCase
     NetCDF.nc_close(ncid)
   end
 
+  def test_set_default_format
+    old = NetCDF.nc_set_default_format(NetCDF::NC_FORMAT_NETCDF4)
+    begin
+      assert_equal NetCDF::NC_FORMAT_NETCDF4, NetCDF.nc_set_default_format(NetCDF::NC_FORMAT_NETCDF4)
+      ncid = NetCDF.nc_create(@path, NetCDF::NC_CLOBBER)
+      assert_equal NetCDF::NC_FORMAT_NETCDF4, NetCDF.nc_inq_format(ncid)
+      NetCDF.nc_close(ncid)
+    ensure
+      NetCDF.nc_set_default_format(old)
+    end
+    assert_equal NetCDF::NC_FORMAT_CLASSIC, old
+  end
+
   def test_inq_format_extended
     omit "linked libnetcdf lacks nc_inq_format_extended" unless NetCDF.respond_to?(:nc_inq_format_extended)
     ncid = NetCDF.nc_create(@path, NetCDF::NC_CLOBBER | NetCDF::NC_NETCDF4)

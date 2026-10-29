@@ -44,8 +44,10 @@ NetCDF.nc_inq_ndims(ncid)      # => Integer
 NetCDF.nc_inq_nvars(ncid)      # => Integer
 NetCDF.nc_inq_natts(ncid)      # => Integer
 NetCDF.nc_inq_unlimdim(ncid)   # => Integer | nil
+NetCDF.nc_inq_unlimdims(ncid)  # => [Integer, ...] (every unlimited dim; [] if none)
 
 oldmode = NetCDF.nc_set_fill(ncid, mode)
+oldfmt  = NetCDF.nc_set_default_format(fmt)   # fmt: NC_FORMAT_*; for every later nc_create in the process
 
 path  = NetCDF.nc_inq_path(ncid)            # libnetcdf >= 4.1.2, => String
 fmt   = NetCDF.nc_inq_format(ncid)          # => NC_FORMAT_*
@@ -128,7 +130,10 @@ NetCDF.nc_inq_varndims(ncid, varid)
 NetCDF.nc_inq_vardimid(ncid, varid)
 NetCDF.nc_inq_varnatts(ncid, varid)
 NetCDF.nc_rename_var(ncid, varid, newname)
+NetCDF.nc_copy_var(src_ncid, varid, dst_ncid)     # => nil
 ```
+
+`nc_copy_var` copies the definition, the attributes and the data of one variable to another file. The destination must already have dimensions with the same names. It may be in define mode or in data mode. A variable of the same name already there raises `NetCDF::Error`. To find the new variable, use `nc_inq_varid` with its name.
 
 ### Variable scalar I/O
 
@@ -286,9 +291,12 @@ Strings read back — `NC_CHAR` and `NC_STRING` attributes, and `NC_CHAR` and `N
 name, size, base_type, nfields, klass = NetCDF.nc_inq_user_type(ncid, typeid)
 typeid = NetCDF.nc_inq_typeid(ncid, name)   # => Integer | nil
 NetCDF.nc_inq_typeids(ncid)                  # => Array<Integer>
+NetCDF.nc_inq_type_equal(ncid1, typeid1, ncid2, typeid2)   # => true | false
 ```
 
 `klass` is one of `NC_VLEN`, `NC_OPAQUE`, `NC_ENUM`, `NC_COMPOUND`.
+
+`nc_inq_type_equal` compares a user-defined type only after `nc_enddef` on its file. In define mode it raises `NetCDF::Error` ("HDF error"), even when both arguments name the same type.
 
 ### Opaque (fixed-size raw bytes)
 

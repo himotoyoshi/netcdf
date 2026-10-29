@@ -29,6 +29,26 @@ version you have and a newer one.
      libnetcdf a release needs is said in extconf.rb, and an entry says
      so only when the answer changes. -->
 
+## 0.2.0 (unreleased)
+
+- New: `NetCDF.nc_copy_var(src_ncid, varid, dst_ncid)` copies one variable
+  -- its definition, attributes and data -- to another file. The
+  destination needs dimensions with the same names.
+
+- New: `NetCDF.nc_set_default_format(format)` sets the format that
+  `nc_create` uses when the mode names none, and returns the old one.
+  The setting is for the whole process, not for one file.
+
+- New: `NetCDF.nc_inq_type_equal(ncid1, typeid1, ncid2, typeid2)` returns
+  `true` if the two types are the same, also when they are in different
+  files or groups. A user-defined type can be compared only after
+  `nc_enddef`; in define mode the call raises `NetCDF::Error`.
+
+- New: `NetCDF.nc_inq_unlimdims(ncid)` returns the ids of all unlimited
+  dimensions as an Array, or `[]` if there are none. A NetCDF-4 file can
+  have more than one unlimited dimension; `nc_inq_unlimdim` still returns
+  only one of them.
+
 ## 0.1.0
 
 First release.

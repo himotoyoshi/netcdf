@@ -67,6 +67,17 @@ rb_nc_inq_typeids (VALUE self, VALUE rncid)
   return out;
 }
 
+/* The two types may live in different files or groups. */
+static VALUE
+rb_nc_inq_type_equal (VALUE self, VALUE rncid1, VALUE rtypeid1, VALUE rncid2, VALUE rtypeid2)
+{
+  int equal;
+
+  NC_CHECK(nc_inq_type_equal(NUM2INT(rncid1), NUM2INT(rtypeid1),
+                             NUM2INT(rncid2), NUM2INT(rtypeid2), &equal));
+  return equal ? Qtrue : Qfalse;
+}
+
 /* ---------------------------------------------------------- */
 /* Opaque (fixed-size byte type)                               */
 /* ---------------------------------------------------------- */
@@ -263,6 +274,7 @@ init_nc_types (void)
   rb_define_module_function(mNetCDF, "nc_inq_user_type",     rb_nc_inq_user_type,     2);
   rb_define_module_function(mNetCDF, "nc_inq_typeid",        rb_nc_inq_typeid,        2);
   rb_define_module_function(mNetCDF, "nc_inq_typeids",       rb_nc_inq_typeids,       1);
+  rb_define_module_function(mNetCDF, "nc_inq_type_equal",    rb_nc_inq_type_equal,    4);
 
   rb_define_module_function(mNetCDF, "nc_def_opaque",        rb_nc_def_opaque,        3);
   rb_define_module_function(mNetCDF, "nc_inq_opaque",        rb_nc_inq_opaque,        2);

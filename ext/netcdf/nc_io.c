@@ -1267,6 +1267,45 @@ rb_nc_get_var (int argc, VALUE *argv, VALUE self)
   return rb_nc_var_io(rncid, rvarid, rbuf, false);
 }
 
+/* ---------------------------------------------------------- */
+/* Whole-variable copy between files                           */
+/* ---------------------------------------------------------- */
+
+typedef struct {
+  int ncid_in, varid, ncid_out;
+  int status;
+} copy_var_args_t;
+
+static void *
+nogvl_copy_var (void *p)
+{
+  copy_var_args_t *a;
+
+  a = (copy_var_args_t *) p;
+  a->status = nc_copy_var(a->ncid_in, a->varid, a->ncid_out);
+  return NULL;
+}
+
+/* Copies the definition, the attributes and the data.  Nothing is held
+   across the call, so an interrupt that kept it from running is raised,
+   or the copy tried again, with nothing to clean up first. */
+static VALUE
+rb_nc_copy_var (VALUE self, VALUE rncid_in, VALUE rvarid, VALUE rncid_out)
+{
+  copy_var_args_t a;
+
+  a.ncid_in  = NUM2INT(rncid_in);
+  a.varid    = NUM2INT(rvarid);
+  a.ncid_out = NUM2INT(rncid_out);
+  a.status   = NC_NOERR;
+  while ( ! call_without_gvl(nogvl_copy_var, &a) ) {
+    rb_thread_check_ints();
+  }
+  rb_thread_check_ints();
+  NC_CHECK(a.status);
+  return Qnil;
+}
+
 void
 init_nc_io (void)
 {
@@ -1281,4 +1320,6 @@ init_nc_io (void)
   rb_define_module_function(mNetCDF, "nc_get_vars", rb_nc_get_vars, -1);
   rb_define_module_function(mNetCDF, "nc_put_varm", rb_nc_put_varm,  7);
   rb_define_module_function(mNetCDF, "nc_get_varm", rb_nc_get_varm, -1);
+
+  rb_define_module_function(mNetCDF, "nc_copy_var", rb_nc_copy_var,  3);
 }

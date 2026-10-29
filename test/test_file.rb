@@ -46,6 +46,38 @@ class TestFile < Test::Unit::TestCase
     NetCDF.nc_close(ncid)
   end
 
+  def test_inq_unlimdims_classic
+    ncid = NetCDF.nc_create(@path, NetCDF::NC_CLOBBER)
+    NetCDF.nc_def_dim(ncid, "x", 10)
+    NetCDF.nc_enddef(ncid)
+    assert_equal [], NetCDF.nc_inq_unlimdims(ncid)
+    NetCDF.nc_close(ncid)
+
+    ncid = NetCDF.nc_create(@path, NetCDF::NC_CLOBBER)
+    time_id = NetCDF.nc_def_dim(ncid, "time", NetCDF::NC_UNLIMITED)
+    NetCDF.nc_def_dim(ncid, "x", 10)
+    NetCDF.nc_enddef(ncid)
+    NetCDF.nc_close(ncid)
+
+    ncid = NetCDF.nc_open(@path, NetCDF::NC_NOWRITE)
+    assert_equal [time_id], NetCDF.nc_inq_unlimdims(ncid)
+    NetCDF.nc_close(ncid)
+  end
+
+  def test_inq_unlimdims_netcdf4_two_unlimited
+    ncid = NetCDF.nc_create(@path, NetCDF::NC_CLOBBER | NetCDF::NC_NETCDF4)
+    NetCDF.nc_def_dim(ncid, "x", 10)
+    time_id    = NetCDF.nc_def_dim(ncid, "time", NetCDF::NC_UNLIMITED)
+    station_id = NetCDF.nc_def_dim(ncid, "station", NetCDF::NC_UNLIMITED)
+    NetCDF.nc_enddef(ncid)
+    NetCDF.nc_close(ncid)
+
+    ncid = NetCDF.nc_open(@path, NetCDF::NC_NOWRITE)
+    assert_equal [time_id, station_id], NetCDF.nc_inq_unlimdims(ncid).sort
+    assert_equal time_id, NetCDF.nc_inq_unlimdim(ncid)
+    NetCDF.nc_close(ncid)
+  end
+
   def test_error_raises_with_status
     err = assert_raise(NetCDF::Error) do
       NetCDF.nc_open(File.join(@tmp, "missing.nc"))
