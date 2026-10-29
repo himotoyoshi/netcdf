@@ -6,10 +6,10 @@ The binding is nearly one to one, each C function corresponding to a Ruby method
 
 ## Features
 
-* Provides the same `nc_*` functions as the NetCDF C library, with their arguments in the same order as the originals
+* Provides the same functions as the NetCDF C library, under the same names and with their arguments in the same order
 * Variable data is read and written with any buffer object that supports MemoryView
 * Ruby's GVL (Global VM Lock) is released while variable data is read or written
-* NetCDF calls from different threads run one at a time (libnetcdf is not thread-safe)
+* Access to the libnetcdf API is serialized (libnetcdf itself is not thread-safe)
 
 ## Install
 
