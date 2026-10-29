@@ -197,12 +197,29 @@ NetCDF.nc_inq_var_filter_info(ncid, varid, filter_id)             # libnetcdf >=
 NetCDF.nc_inq_var_filter_ids(ncid, varid)                         # libnetcdf >= 4.7, => Array<Integer>
 NetCDF.nc_inq_filter_avail(ncid, filter_id)                       # libnetcdf >= 4.7, => true | false
 
+NetCDF.nc_def_var_szip(ncid, varid, options_mask, pixels_per_block)   # options_mask: NC_SZIP_NN or NC_SZIP_EC
+NetCDF.nc_inq_var_szip(ncid, varid)                               # => [options_mask, pixels_per_block]
+NetCDF.nc_def_var_zstandard(ncid, varid, level)                   # libnetcdf >= 4.9
+NetCDF.nc_inq_var_zstandard(ncid, varid)                          # libnetcdf >= 4.9, => [has_filter, level]
+NetCDF.nc_def_var_bzip2(ncid, varid, level)                       # libnetcdf >= 4.9
+NetCDF.nc_inq_var_bzip2(ncid, varid)                              # libnetcdf >= 4.9, => [has_filter, level]
+NetCDF.nc_def_var_blosc(ncid, varid, subcompressor, level, blocksize, shuffle)   # libnetcdf >= 4.9
+NetCDF.nc_inq_var_blosc(ncid, varid)                              # libnetcdf >= 4.9,
+                                                                  #   => [has_filter, subcompressor, level, blocksize, shuffle]
+
 NetCDF.nc_def_var_quantize(ncid, varid, mode, nsd)                # libnetcdf >= 4.9
 NetCDF.nc_inq_var_quantize(ncid, varid)                           # libnetcdf >= 4.9, => [mode, nsd]
 
 NetCDF.nc_set_var_chunk_cache(ncid, varid, size, nelems, preemption)
 NetCDF.nc_get_var_chunk_cache(ncid, varid)       # => [size, nelems, preemption]
 ```
+
+The calls for szip, zstandard, bzip2 and blosc are there even when libnetcdf was built without the filter. To check whether a filter can be used, call `nc_inq_filter_avail` with its `H5Z_FILTER_*` id. When the filter is missing:
+
+- The four def calls raise `NetCDF::Error` with status `NC_ENOFILTER` (-136). The gem checks this itself, because a libnetcdf without blosc returns no error from `nc_def_var_blosc` and writes the data uncompressed. For szip the check needs libnetcdf 4.7 or later.
+- The `nc_inq_var_*` calls report that the variable does not have the filter.
+
+A filter needs chunked storage (`nc_def_var_chunking` with `NC_CHUNKED`). A classic-format file has no filters.
 
 Global chunk cache (process-wide HDF5 cache parameters):
 
@@ -388,6 +405,12 @@ Fletcher32: `NC_NOCHECKSUM`, `NC_FLETCHER32`.
 Endian: `NC_ENDIAN_NATIVE`, `NC_ENDIAN_LITTLE`, `NC_ENDIAN_BIG`.
 
 Quantize modes: `NC_NOQUANTIZE`, `NC_QUANTIZE_BITGROOM`, `NC_QUANTIZE_GRANULARBR`, `NC_QUANTIZE_BITROUND`.
+
+Filter ids (for `nc_inq_filter_avail` and `nc_inq_var_filter_ids`): `H5Z_FILTER_DEFLATE`, `H5Z_FILTER_SHUFFLE`, `H5Z_FILTER_FLETCHER32`, `H5Z_FILTER_SZIP`, `H5Z_FILTER_ZSTD`, `H5Z_FILTER_BZIP2`, `H5Z_FILTER_BLOSC`.
+
+Szip options: `NC_SZIP_NN`, `NC_SZIP_EC`.
+
+Blosc subcompressors: `BLOSC_LZ`, `BLOSC_LZ4`, `BLOSC_LZ4HC`, `BLOSC_SNAPPY`, `BLOSC_ZLIB`, `BLOSC_ZSTD`. Blosc shuffle: `BLOSC_NOSHUFFLE`, `BLOSC_SHUFFLE`, `BLOSC_BITSHUFFLE`. (libnetcdf >= 4.9)
 
 Limits: `NC_MAX_NAME`, `NC_MAX_VAR_DIMS`.
 

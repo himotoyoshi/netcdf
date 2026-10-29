@@ -279,6 +279,51 @@ Init_netcdf (void)
   DEF_CONST(NC_QUANTIZE_BITROUND);
 #endif
 
+  /* Filter ids, for nc_inq_filter_avail and nc_inq_var_filter_ids */
+#ifdef H5Z_FILTER_DEFLATE
+  DEF_CONST(H5Z_FILTER_DEFLATE);
+#endif
+#ifdef H5Z_FILTER_SHUFFLE
+  DEF_CONST(H5Z_FILTER_SHUFFLE);
+#endif
+#ifdef H5Z_FILTER_FLETCHER32
+  DEF_CONST(H5Z_FILTER_FLETCHER32);
+#endif
+#ifdef H5Z_FILTER_SZIP
+  DEF_CONST(H5Z_FILTER_SZIP);
+#endif
+#ifdef H5Z_FILTER_ZSTD
+  DEF_CONST(H5Z_FILTER_ZSTD);
+#endif
+#ifdef H5Z_FILTER_BZIP2
+  DEF_CONST(H5Z_FILTER_BZIP2);
+#endif
+#ifdef H5Z_FILTER_BLOSC
+  DEF_CONST(H5Z_FILTER_BLOSC);
+#endif
+
+  /* szip options_mask */
+#ifdef NC_SZIP_EC
+  DEF_CONST(NC_SZIP_EC);
+#endif
+#ifdef NC_SZIP_NN
+  DEF_CONST(NC_SZIP_NN);
+#endif
+
+  /* Blosc subcompressors and shuffle modes.  These are enum members,
+     not macros, so they are gated on the call that takes them. */
+#ifdef HAVE_NC_DEF_VAR_BLOSC
+  DEF_CONST(BLOSC_LZ);
+  DEF_CONST(BLOSC_LZ4);
+  DEF_CONST(BLOSC_LZ4HC);
+  DEF_CONST(BLOSC_SNAPPY);
+  DEF_CONST(BLOSC_ZLIB);
+  DEF_CONST(BLOSC_ZSTD);
+  DEF_CONST(BLOSC_NOSHUFFLE);
+  DEF_CONST(BLOSC_SHUFFLE);
+  DEF_CONST(BLOSC_BITSHUFFLE);
+#endif
+
   /* User-defined type classes (returned by nc_inq_user_type) */
   DEF_CONST(NC_VLEN);
   DEF_CONST(NC_OPAQUE);

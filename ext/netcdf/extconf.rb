@@ -45,6 +45,14 @@ have_func("nc_def_var_filter",      filter_hdrs)  # 4.6+
 have_func("nc_inq_var_filter_info", filter_hdrs)  # 4.6+
 have_func("nc_inq_var_filter_ids",  filter_hdrs)  # 4.6+
 have_func("nc_inq_filter_avail",    filter_hdrs)  # 4.7+
+have_func("nc_def_var_szip",        "netcdf.h")
+have_func("nc_inq_var_szip",        "netcdf.h")
+have_func("nc_def_var_zstandard",   filter_hdrs)  # 4.9+
+have_func("nc_inq_var_zstandard",   filter_hdrs)  # 4.9+
+have_func("nc_def_var_bzip2",       filter_hdrs)  # 4.9+
+have_func("nc_inq_var_bzip2",       filter_hdrs)  # 4.9+
+have_func("nc_def_var_blosc",       filter_hdrs)  # 4.9+
+have_func("nc_inq_var_blosc",       filter_hdrs)  # 4.9+
 
 # In-memory file APIs.  nc_open_mem arrived in 4.4; nc_create_mem and
 # nc_close_memio (with NC_memio) arrived in 4.6.2.  netcdf_mem.h needs

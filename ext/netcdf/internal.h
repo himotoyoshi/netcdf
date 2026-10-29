@@ -15,7 +15,10 @@
 #if defined(HAVE_NC_DEF_VAR_FILTER)      || \
     defined(HAVE_NC_INQ_VAR_FILTER_INFO) || \
     defined(HAVE_NC_INQ_VAR_FILTER_IDS)  || \
-    defined(HAVE_NC_INQ_FILTER_AVAIL)
+    defined(HAVE_NC_INQ_FILTER_AVAIL)    || \
+    defined(HAVE_NC_DEF_VAR_ZSTANDARD)   || \
+    defined(HAVE_NC_DEF_VAR_BZIP2)       || \
+    defined(HAVE_NC_DEF_VAR_BLOSC)
 # include <netcdf_filter.h>
 #endif
 #ifdef HAVE_NETCDF_MEM_H

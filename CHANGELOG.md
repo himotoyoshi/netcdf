@@ -31,6 +31,14 @@ version you have and a newer one.
 
 ## 0.2.0 (unreleased)
 
+- New: calls for the compression filters szip, zstandard, bzip2 and
+  blosc: `nc_def_var_szip` / `nc_inq_var_szip`, and the same pair for
+  `zstandard`, `bzip2` and `blosc` (libnetcdf 4.9 or later). New constants
+  give the filter ids (`H5Z_FILTER_*`) and the szip and blosc options.
+  When libnetcdf has no such filter, the def calls raise
+  `NetCDF::Error` (`NC_ENOFILTER`) instead of writing uncompressed data.
+  For szip this check needs libnetcdf 4.7 or later.
+
 - New: `NetCDF.nc_copy_var(src_ncid, varid, dst_ncid)` copies one variable
   -- its definition, attributes and data -- to another file. The
   destination needs dimensions with the same names.

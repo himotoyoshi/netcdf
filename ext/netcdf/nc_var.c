@@ -452,6 +452,137 @@ rb_nc_inq_filter_avail (VALUE self, VALUE rncid, VALUE rid)
 #endif
 
 /* ---------------------------------------------------------- */
+/* Compression filters with their own calls                    */
+/* ---------------------------------------------------------- */
+
+/* Whether the filter can be used depends on how libnetcdf was built,
+   but the calls are there either way.  A libnetcdf built without blosc
+   returns NC_NOERR from both blosc calls and sets nothing, so every inq
+   here starts its outputs at 0: a variable without the filter then
+   reads back as not having it.
+
+   Each def call here first asks whether the filter is there, and
+   raises NC_ENOFILTER when it is not: the blosc def would otherwise
+   return without adding the filter, and the data would be written
+   uncompressed.  The check needs nc_inq_filter_avail (4.7+); the szip
+   def in an older libnetcdf goes without it. */
+
+#ifdef HAVE_NC_INQ_FILTER_AVAIL
+static void
+check_filter_available (int ncid, unsigned id)
+{
+  NC_CHECK(nc_inq_filter_avail(ncid, id));
+}
+#endif
+
+#ifdef HAVE_NC_DEF_VAR_SZIP
+static VALUE
+rb_nc_def_var_szip (VALUE self, VALUE rncid, VALUE rvarid,
+                    VALUE roptions_mask, VALUE rpixels_per_block)
+{
+#ifdef HAVE_NC_INQ_FILTER_AVAIL
+  check_filter_available(NUM2INT(rncid), H5Z_FILTER_SZIP);
+#endif
+  NC_CHECK(nc_def_var_szip(NUM2INT(rncid), NUM2INT(rvarid),
+                           NUM2INT(roptions_mask), NUM2INT(rpixels_per_block)));
+  return Qnil;
+}
+#endif
+
+#ifdef HAVE_NC_INQ_VAR_SZIP
+static VALUE
+rb_nc_inq_var_szip (VALUE self, VALUE rncid, VALUE rvarid)
+{
+  int options_mask, pixels_per_block;
+
+  options_mask     = 0;
+  pixels_per_block = 0;
+  NC_CHECK(nc_inq_var_szip(NUM2INT(rncid), NUM2INT(rvarid),
+                           &options_mask, &pixels_per_block));
+  return rb_ary_new_from_args(2, INT2NUM(options_mask), INT2NUM(pixels_per_block));
+}
+#endif
+
+#ifdef HAVE_NC_DEF_VAR_ZSTANDARD
+static VALUE
+rb_nc_def_var_zstandard (VALUE self, VALUE rncid, VALUE rvarid, VALUE rlevel)
+{
+  check_filter_available(NUM2INT(rncid), H5Z_FILTER_ZSTD);
+  NC_CHECK(nc_def_var_zstandard(NUM2INT(rncid), NUM2INT(rvarid), NUM2INT(rlevel)));
+  return Qnil;
+}
+#endif
+
+#ifdef HAVE_NC_INQ_VAR_ZSTANDARD
+static VALUE
+rb_nc_inq_var_zstandard (VALUE self, VALUE rncid, VALUE rvarid)
+{
+  int has, level;
+
+  has   = 0;
+  level = 0;
+  NC_CHECK(nc_inq_var_zstandard(NUM2INT(rncid), NUM2INT(rvarid), &has, &level));
+  return rb_ary_new_from_args(2, has ? Qtrue : Qfalse, INT2NUM(level));
+}
+#endif
+
+#ifdef HAVE_NC_DEF_VAR_BZIP2
+static VALUE
+rb_nc_def_var_bzip2 (VALUE self, VALUE rncid, VALUE rvarid, VALUE rlevel)
+{
+  check_filter_available(NUM2INT(rncid), H5Z_FILTER_BZIP2);
+  NC_CHECK(nc_def_var_bzip2(NUM2INT(rncid), NUM2INT(rvarid), NUM2INT(rlevel)));
+  return Qnil;
+}
+#endif
+
+#ifdef HAVE_NC_INQ_VAR_BZIP2
+static VALUE
+rb_nc_inq_var_bzip2 (VALUE self, VALUE rncid, VALUE rvarid)
+{
+  int has, level;
+
+  has   = 0;
+  level = 0;
+  NC_CHECK(nc_inq_var_bzip2(NUM2INT(rncid), NUM2INT(rvarid), &has, &level));
+  return rb_ary_new_from_args(2, has ? Qtrue : Qfalse, INT2NUM(level));
+}
+#endif
+
+#ifdef HAVE_NC_DEF_VAR_BLOSC
+static VALUE
+rb_nc_def_var_blosc (VALUE self, VALUE rncid, VALUE rvarid, VALUE rsubcompressor,
+                     VALUE rlevel, VALUE rblocksize, VALUE raddshuffle)
+{
+  check_filter_available(NUM2INT(rncid), H5Z_FILTER_BLOSC);
+  NC_CHECK(nc_def_var_blosc(NUM2INT(rncid), NUM2INT(rvarid),
+                            NUM2UINT(rsubcompressor), NUM2UINT(rlevel),
+                            NUM2UINT(rblocksize), NUM2UINT(raddshuffle)));
+  return Qnil;
+}
+#endif
+
+#ifdef HAVE_NC_INQ_VAR_BLOSC
+static VALUE
+rb_nc_inq_var_blosc (VALUE self, VALUE rncid, VALUE rvarid)
+{
+  int has;
+  unsigned subcompressor, level, blocksize, addshuffle;
+
+  has           = 0;
+  subcompressor = 0;
+  level         = 0;
+  blocksize     = 0;
+  addshuffle    = 0;
+  NC_CHECK(nc_inq_var_blosc(NUM2INT(rncid), NUM2INT(rvarid), &has,
+                            &subcompressor, &level, &blocksize, &addshuffle));
+  return rb_ary_new_from_args(5, has ? Qtrue : Qfalse,
+                              UINT2NUM(subcompressor), UINT2NUM(level),
+                              UINT2NUM(blocksize), UINT2NUM(addshuffle));
+}
+#endif
+
+/* ---------------------------------------------------------- */
 /* Quantize (lossy bit-grooming for floating-point data)       */
 /* ---------------------------------------------------------- */
 
@@ -537,6 +668,31 @@ init_nc_var (void)
 #endif
 #ifdef HAVE_NC_INQ_FILTER_AVAIL
   rb_define_module_function(mNetCDF, "nc_inq_filter_avail",    rb_nc_inq_filter_avail,    2);
+#endif
+
+#ifdef HAVE_NC_DEF_VAR_SZIP
+  rb_define_module_function(mNetCDF, "nc_def_var_szip",        rb_nc_def_var_szip,        4);
+#endif
+#ifdef HAVE_NC_INQ_VAR_SZIP
+  rb_define_module_function(mNetCDF, "nc_inq_var_szip",        rb_nc_inq_var_szip,        2);
+#endif
+#ifdef HAVE_NC_DEF_VAR_ZSTANDARD
+  rb_define_module_function(mNetCDF, "nc_def_var_zstandard",   rb_nc_def_var_zstandard,   3);
+#endif
+#ifdef HAVE_NC_INQ_VAR_ZSTANDARD
+  rb_define_module_function(mNetCDF, "nc_inq_var_zstandard",   rb_nc_inq_var_zstandard,   2);
+#endif
+#ifdef HAVE_NC_DEF_VAR_BZIP2
+  rb_define_module_function(mNetCDF, "nc_def_var_bzip2",       rb_nc_def_var_bzip2,       3);
+#endif
+#ifdef HAVE_NC_INQ_VAR_BZIP2
+  rb_define_module_function(mNetCDF, "nc_inq_var_bzip2",       rb_nc_inq_var_bzip2,       2);
+#endif
+#ifdef HAVE_NC_DEF_VAR_BLOSC
+  rb_define_module_function(mNetCDF, "nc_def_var_blosc",       rb_nc_def_var_blosc,       6);
+#endif
+#ifdef HAVE_NC_INQ_VAR_BLOSC
+  rb_define_module_function(mNetCDF, "nc_inq_var_blosc",       rb_nc_inq_var_blosc,       2);
 #endif
 
 #ifdef HAVE_NC_DEF_VAR_QUANTIZE
