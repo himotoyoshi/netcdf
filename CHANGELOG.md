@@ -29,6 +29,8 @@ version you have and a newer one.
      libnetcdf a release needs is said in extconf.rb, and an entry says
      so only when the answer changes. -->
 
+## 0.3.0 (unreleased)
+
 ## 0.2.0
 
 - New: the `NC_64BIT_DATA` creation flag, and its alias `NC_CDF5`, for
