@@ -364,6 +364,8 @@ NetCDF.nc_inq_enum_ident(ncid, typeid, value)   # => String | nil
 
 Variables of enum type are read and written as plain Integers — internally the gem uses libnetcdf's untyped scalar/array I/O to satisfy the enum type check.  That I/O moves elements of the base type with no conversion, so an array buffer for an enum variable holds the base type: a formatted buffer must name it (`"i"` for an `NC_INT` base), and one naming another type raises `ArgumentError`.  A formatless buffer is read as the base type.
 
+Attributes of enum type are read the same way. libnetcdf's typed getters refuse one, but here `nc_get_att` returns its values as Integers of the base type, and the typed getter for the base type (`nc_get_att_uchar` for an `NC_UBYTE` base) reads it too; any other typed getter raises `NetCDF::Error`. The usual case is a `_FillValue` on an enum variable, which netCDF4-python writes with the enum's type. `nc_def_var_fill` and `nc_inq_var_fill` on an enum variable take and return the fill value as an Integer of the base type, and the default fill is the base type's. There is no call yet to write an enum attribute other than through `nc_def_var_fill`.
+
 ## Group (NetCDF-4 only)
 
 ```
@@ -384,7 +386,7 @@ A group's `ncid` is interchangeable with the file's `ncid` for almost all calls 
 
 ## Constants
 
-Open / create modes: `NC_NOWRITE`, `NC_WRITE`, `NC_CLOBBER`, `NC_NOCLOBBER`, `NC_SHARE`, `NC_NETCDF4`, `NC_CLASSIC_MODEL`, `NC_64BIT_OFFSET`.
+Open / create modes: `NC_NOWRITE`, `NC_WRITE`, `NC_CLOBBER`, `NC_NOCLOBBER`, `NC_SHARE`, `NC_NETCDF4`, `NC_CLASSIC_MODEL`, `NC_64BIT_OFFSET`, `NC_64BIT_DATA` (alias `NC_CDF5`; CDF-5, defined only when the linked libnetcdf provides it).
 
 Diskless / in-memory modes (defined only when the linked libnetcdf provides them): `NC_DISKLESS`, `NC_PERSIST`, `NC_MMAP`, `NC_INMEMORY`.
 

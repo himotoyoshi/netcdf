@@ -46,6 +46,22 @@ class TestFile < Test::Unit::TestCase
     NetCDF.nc_close(ncid)
   end
 
+  def test_create_64bit_data
+    assert_equal NetCDF::NC_64BIT_DATA, NetCDF::NC_CDF5
+
+    ncid = NetCDF.nc_create(@path, NetCDF::NC_CLOBBER | NetCDF::NC_64BIT_DATA)
+    d = NetCDF.nc_def_dim(ncid, "n", 2)
+    v = NetCDF.nc_def_var(ncid, "big", NetCDF::NC_UINT64, [d])
+    NetCDF.nc_enddef(ncid)
+    NetCDF.nc_put_var1(ncid, v, [1], 2**64 - 1)
+    NetCDF.nc_close(ncid)
+
+    ncid = NetCDF.nc_open(@path, NetCDF::NC_NOWRITE)
+    assert_equal NetCDF::NC_FORMAT_64BIT_DATA, NetCDF.nc_inq_format(ncid)
+    assert_equal 2**64 - 1, NetCDF.nc_get_var1(ncid, v, [1])
+    NetCDF.nc_close(ncid)
+  end
+
   def test_inq_unlimdims_classic
     ncid = NetCDF.nc_create(@path, NetCDF::NC_CLOBBER)
     NetCDF.nc_def_dim(ncid, "x", 10)

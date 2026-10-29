@@ -44,6 +44,7 @@ void nc_raise(int status) __attribute__((noreturn));
 void    ary_to_sizet(VALUE ary, int ndims, const char *role, size_t *out);
 bool    ary_to_ptrdiff(VALUE ary, int ndims, const char *role, ptrdiff_t *out);
 ssize_t nc_xtype_size(nc_type xt);
+nc_type resolve_enum_base(int ncid, nc_type xt);
 void    indices_to_c(int ncid, int varid, VALUE index_ary, size_t *out);
 
 /* Range-checked integer conversions (defined in netcdf.c); each raises

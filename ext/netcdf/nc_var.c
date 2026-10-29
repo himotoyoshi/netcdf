@@ -150,6 +150,8 @@ rb_nc_def_var_fill (VALUE self, VALUE rncid, VALUE rvarid, VALUE rno_fill, VALUE
   no_fill = RTEST(rno_fill) ? 1 : 0;
 
   NC_CHECK(nc_inq_vartype(ncid, varid, &xt));
+  /* an enum variable's fill value is an element of its base type */
+  xt = resolve_enum_base(ncid, xt);
 
   if ( NIL_P(rfill) ) {
     NC_CHECK(nc_def_var_fill(ncid, varid, no_fill, NULL));
@@ -201,6 +203,7 @@ rb_nc_inq_var_fill (VALUE self, VALUE rncid, VALUE rvarid)
   varid = NUM2INT(rvarid);
 
   NC_CHECK(nc_inq_vartype(ncid, varid, &xt));
+  xt = resolve_enum_base(ncid, xt);
   /* libnetcdf writes a whole element of the variable's type into `v`,
      so refuse any type the union below cannot hold before asking --
      an opaque's element can be any size. */

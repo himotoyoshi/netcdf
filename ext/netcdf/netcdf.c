@@ -73,6 +73,25 @@ nc_xtype_size (nc_type xt)
   }
 }
 
+/* The base type of the enum type `xt`, or `xt` itself for any other type.
+   An enum value is stored as its base type, so code that reads or writes
+   one element can treat it as that integer type. */
+nc_type
+resolve_enum_base (int ncid, nc_type xt)
+{
+  nc_type base;
+  int klass;
+
+  if ( xt < NC_FIRSTUSERTYPEID ) {
+    return xt;
+  }
+  NC_CHECK(nc_inq_user_type(ncid, xt, NULL, NULL, &base, NULL, &klass));
+  if ( klass != NC_ENUM ) {
+    return xt;
+  }
+  return base;
+}
+
 /* Integer conversions that refuse a value the C type cannot hold.  A cast
    would store 300 as NC_BYTE 44, and Ruby's own NUM2UINT / NUM2ULL wrap a
    negative value around rather than raise, so -1 would be stored as the
@@ -173,6 +192,12 @@ Init_netcdf (void)
   DEF_CONST(NC_NETCDF4);
   DEF_CONST(NC_CLASSIC_MODEL);
   DEF_CONST(NC_64BIT_OFFSET);
+#ifdef NC_64BIT_DATA
+  DEF_CONST(NC_64BIT_DATA);            /* CDF-5; libnetcdf 4.4+ */
+#endif
+#ifdef NC_CDF5
+  DEF_CONST(NC_CDF5);                  /* alias of NC_64BIT_DATA */
+#endif
 #ifdef NC_DISKLESS
   DEF_CONST(NC_DISKLESS);
 #endif

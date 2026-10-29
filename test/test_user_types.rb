@@ -159,6 +159,44 @@ class TestUserTypes < Test::Unit::TestCase
     assert_equal "BLUE",  NetCDF.nc_inq_enum_ident(@ncid, t, NetCDF.nc_get_var1(@ncid, v, [2]))
   end
 
+  # netCDF4-python's createVariable(..., enum_type, fill_value=255) leaves
+  # an enum-typed _FillValue, which is read as the enum's base type.
+  def test_enum_fill_value_attribute
+    t = NetCDF.nc_def_enum(@ncid, NetCDF::NC_UBYTE, "cloud_t")
+    NetCDF.nc_insert_enum(@ncid, t, "clear",   0)
+    NetCDF.nc_insert_enum(@ncid, t, "missing", 255)
+    d = NetCDF.nc_def_dim(@ncid, "n", 2)
+    v = NetCDF.nc_def_var(@ncid, "cloud", t, [d])
+    NetCDF.nc_def_var_fill(@ncid, v, false, 255)
+    NetCDF.nc_close(@ncid)
+
+    @ncid = NetCDF.nc_open(@path, NetCDF::NC_NOWRITE)
+    assert_equal [t, 1], NetCDF.nc_inq_att(@ncid, v, "_FillValue")
+    assert_equal 255,    NetCDF.nc_get_att(@ncid, v, "_FillValue")
+    assert_equal [255],  NetCDF.nc_get_att_uchar(@ncid, v, "_FillValue")
+    assert_equal [false, 255], NetCDF.nc_inq_var_fill(@ncid, v)
+    assert_equal 255,    NetCDF.nc_get_var1(@ncid, v, [0])
+
+    # only the base type's own getter reads it
+    assert_raise(NetCDF::Error) { NetCDF.nc_get_att_int(@ncid, v, "_FillValue") }
+  end
+
+  def test_enum_fill_value_negative_base
+    t = NetCDF.nc_def_enum(@ncid, NetCDF::NC_SHORT, "flag_t")
+    NetCDF.nc_insert_enum(@ncid, t, "missing", -999)
+    NetCDF.nc_insert_enum(@ncid, t, "ok",      1)
+    d = NetCDF.nc_def_dim(@ncid, "n", 2)
+    v = NetCDF.nc_def_var(@ncid, "flag", t, [d])
+
+    # the base type's default fill (NC_FILL_SHORT)
+    assert_equal [false, -32767], NetCDF.nc_inq_var_fill(@ncid, v)
+    NetCDF.nc_def_var_fill(@ncid, v, false, -999)
+    assert_equal [false, -999], NetCDF.nc_inq_var_fill(@ncid, v)
+    assert_equal -999,          NetCDF.nc_get_att(@ncid, v, "_FillValue")
+    assert_equal [-999],        NetCDF.nc_get_att_short(@ncid, v, "_FillValue")
+    assert_raise(RangeError) { NetCDF.nc_def_var_fill(@ncid, v, false, 40000) }
+  end
+
   def test_enum_vara_via_formatted_buffer
     t = NetCDF.nc_def_enum(@ncid, NetCDF::NC_INT, "Color")
     NetCDF.nc_insert_enum(@ncid, t, "RED",   0)

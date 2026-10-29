@@ -119,9 +119,39 @@ rb_nc_get_att_text (VALUE self, VALUE rncid, VALUE rvarid, VALUE rname)
   return out;
 }
 
+/* libnetcdf refuses to read an enum attribute through a typed getter
+   (NC_EBADTYPE).  Its values are stored as the enum's base type, so when
+   that base type is `memtype` read the raw elements with nc_get_att;
+   otherwise keep NC_EBADTYPE.  Returns a status rather than raising so
+   that the caller can free its buffer first. */
+static int
+get_att_enum_as (int ncid, int varid, const char *name, nc_type memtype, void *buf)
+{
+  nc_type xt, base;
+  int klass, st;
+
+  st = nc_inq_atttype(ncid, varid, name, &xt);
+  if ( st != NC_NOERR ) {
+    return st;
+  }
+  if ( xt < NC_FIRSTUSERTYPEID ) {
+    return NC_EBADTYPE;
+  }
+  st = nc_inq_user_type(ncid, xt, NULL, NULL, &base, NULL, &klass);
+  if ( st != NC_NOERR ) {
+    return st;
+  }
+  if ( klass != NC_ENUM || base != memtype ) {
+    return NC_EBADTYPE;
+  }
+  return nc_get_att(ncid, varid, name, buf);
+}
+
 /* As in C, `xtype` is the attribute's type on disk and the suffix names
-   the type of the values in memory; libnetcdf converts between them. */
-#define DEFINE_ATT_NUM(suffix, ctype, num2c, c2num)                     \
+   the type of the values in memory; libnetcdf converts between them.
+   The getter also reads an enum attribute whose base type is the
+   suffix's type (`memtype`). */
+#define DEFINE_ATT_NUM(suffix, ctype, memtype, num2c, c2num)            \
   static VALUE                                                          \
   rb_nc_put_att_##suffix (VALUE self, VALUE rncid, VALUE rvarid,        \
                           VALUE rname, VALUE rxtype, VALUE rvalue)      \
@@ -161,6 +191,10 @@ rb_nc_get_att_text (VALUE self, VALUE rncid, VALUE rvarid, VALUE rname)
     buf = ALLOC_N(ctype, (len > 0 ? len : 1));                          \
     st = nc_get_att_##suffix(NUM2INT(rncid), NUM2INT(rvarid),           \
                              StringValueCStr(rname), buf);              \
+    if ( st == NC_EBADTYPE ) {                                          \
+      st = get_att_enum_as(NUM2INT(rncid), NUM2INT(rvarid),             \
+                           StringValueCStr(rname), memtype, buf);       \
+    }                                                                   \
     if ( st != NC_NOERR ) {                                             \
       xfree(buf);                                                       \
       nc_raise(st);                                                     \
@@ -173,16 +207,16 @@ rb_nc_get_att_text (VALUE self, VALUE rncid, VALUE rvarid, VALUE rname)
     return out;                                                         \
   }
 
-DEFINE_ATT_NUM(schar,     signed char,        num_to_schar,     INT2NUM)
-DEFINE_ATT_NUM(uchar,     unsigned char,      num_to_uchar,     UINT2NUM)
-DEFINE_ATT_NUM(short,     short,              num_to_short,     INT2NUM)
-DEFINE_ATT_NUM(ushort,    unsigned short,     num_to_ushort,    UINT2NUM)
-DEFINE_ATT_NUM(int,       int,                NUM2INT,          INT2NUM)
-DEFINE_ATT_NUM(uint,      unsigned int,       num_to_uint,      UINT2NUM)
-DEFINE_ATT_NUM(longlong,  long long,          NUM2LL,           LL2NUM)
-DEFINE_ATT_NUM(ulonglong, unsigned long long, num_to_ulonglong, ULL2NUM)
-DEFINE_ATT_NUM(float,     float,              NUM2DBL,          DBL2NUM)
-DEFINE_ATT_NUM(double,    double,             NUM2DBL,          DBL2NUM)
+DEFINE_ATT_NUM(schar,     signed char,        NC_BYTE,   num_to_schar,     INT2NUM)
+DEFINE_ATT_NUM(uchar,     unsigned char,      NC_UBYTE,  num_to_uchar,     UINT2NUM)
+DEFINE_ATT_NUM(short,     short,              NC_SHORT,  num_to_short,     INT2NUM)
+DEFINE_ATT_NUM(ushort,    unsigned short,     NC_USHORT, num_to_ushort,    UINT2NUM)
+DEFINE_ATT_NUM(int,       int,                NC_INT,    NUM2INT,          INT2NUM)
+DEFINE_ATT_NUM(uint,      unsigned int,       NC_UINT,   num_to_uint,      UINT2NUM)
+DEFINE_ATT_NUM(longlong,  long long,          NC_INT64,  NUM2LL,           LL2NUM)
+DEFINE_ATT_NUM(ulonglong, unsigned long long, NC_UINT64, num_to_ulonglong, ULL2NUM)
+DEFINE_ATT_NUM(float,     float,              NC_FLOAT,  NUM2DBL,          DBL2NUM)
+DEFINE_ATT_NUM(double,    double,             NC_DOUBLE, NUM2DBL,          DBL2NUM)
 
 static VALUE
 rb_nc_put_att_string (VALUE self, VALUE rncid, VALUE rvarid, VALUE rname, VALUE rvalue)
@@ -369,6 +403,9 @@ rb_nc_get_att (VALUE self, VALUE rncid, VALUE rvarid, VALUE rname)
     return out;
   }
 
+  /* an enum attribute is read as its base type, which the typed getters
+     below accept */
+  xt = resolve_enum_base(NUM2INT(rncid), xt);
   switch ( xt ) {
   case NC_BYTE:   out = rb_nc_get_att_schar(self, rncid, rvarid, rname);     break;
   case NC_UBYTE:  out = rb_nc_get_att_uchar(self, rncid, rvarid, rname);     break;
