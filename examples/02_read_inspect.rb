@@ -35,7 +35,7 @@ end
 # type is ours to choose -- libnetcdf converts to it -- so doubles it is.
 _, _, _, dimids, _ = NetCDF.nc_inq_var(ncid, 0)
 shape = dimids.map { |d| NetCDF.nc_inq_dimlen(ncid, d) }
-data = CArray.double(*shape)
+data = CArray.float64(*shape)
 NetCDF.nc_get_var(ncid, 0, data)
 puts
 puts "First 6 values of variable 0: #{data.to_a.flatten.first(6).inspect}"

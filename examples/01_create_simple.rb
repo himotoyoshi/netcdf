@@ -27,7 +27,7 @@ NetCDF.nc_put_att(ncid, NetCDF::NC_GLOBAL, "title", "Example temperature field")
 NetCDF.nc_enddef(ncid)
 
 # Write all 24 cells in one shot from a CArray holding the data.
-src = CArray.double(4, 6).seq(273.15)
+src = CArray.float64(4, 6).seq(273.15)
 NetCDF.nc_put_var(ncid, vid, src)
 
 NetCDF.nc_close(ncid)

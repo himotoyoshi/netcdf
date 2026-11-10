@@ -22,9 +22,9 @@ Dir.mktmpdir do |tmp|
   NetCDF.nc_enddef(ncid)
 
   # 1. CArray double, plain round-trip.
-  src = CArray.double(3, 4).seq(1.0)
+  src = CArray.float64(3, 4).seq(1.0)
   NetCDF.nc_put_var(ncid, v_d, src)
-  dst = CArray.double(3, 4)
+  dst = CArray.float64(3, 4)
   NetCDF.nc_get_var(ncid, v_d, dst)
   puts "CArray double round-trip matches: #{src.to_a == dst.to_a}"
 
@@ -37,9 +37,9 @@ Dir.mktmpdir do |tmp|
 
   # 3. libnetcdf converts on the way out: the int32 variable read into a
   #    double CArray.
-  dst = CArray.double(3, 4)
+  dst = CArray.float64(3, 4)
   NetCDF.nc_get_var(ncid, v_n, dst)
-  puts "int32 -> CArray double matches:   #{dst.to_a == CArray.double(3, 4).seq.to_a}"
+  puts "int32 -> CArray double matches:   #{dst.to_a == CArray.float64(3, 4).seq.to_a}"
 
   NetCDF.nc_close(ncid)
 end
